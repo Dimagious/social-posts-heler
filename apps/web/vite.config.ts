@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const isGitHubPagesBuild = process.env.GITHUB_PAGES === 'true';
+const repoName =
+  process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'social-posts-heler';
+
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_PAGES === 'true' ? '/mint/' : '/',
+  base: isGitHubPagesBuild ? `/${repoName}/` : '/',
   server: {
     port: 3000,
   },
