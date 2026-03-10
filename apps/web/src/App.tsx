@@ -39,7 +39,7 @@ import { LayersPanel } from './components/LayersPanel';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ToolbarSection } from './components/ToolbarSection';
 
-const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/mint';
+const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/dimagious';
 
 export const App: React.FC = () => {
   const { t, i18n } = useTranslation();

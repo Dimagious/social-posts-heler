@@ -117,4 +117,4 @@ That makes it ideal for side projects, personal brands, and "built-on-a-vacation
 
 If MINT helps you publish content faster:
 
-`https://buymeacoffee.com/mint`
+`https://buymeacoffee.com/dimagious`
