@@ -1,11 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { theme, preloadAllGoogleFonts } from '@mint/ui';
+import { theme } from '@mint/ui';
 import './i18n';
 import { App } from './App';
-
-preloadAllGoogleFonts();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');

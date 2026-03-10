@@ -1,39 +1,65 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Box,
   AppBar,
-  Toolbar,
-  Typography,
+  Box,
   Button,
-  Stack,
+  Drawer,
   IconButton,
-  ToggleButtonGroup,
+  Menu,
+  MenuItem,
+  Paper,
+  Stack,
   ToggleButton,
+  ToggleButtonGroup,
+  Toolbar,
   Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
-  Undo,
-  Redo,
-  TextFields,
+  AutoAwesome,
+  CropFree,
   Download,
-  LocalCafe,
-  Save,
   FolderOpen,
+  LocalCafe,
+  MoreVert,
+  Redo,
+  Save,
+  TextFields,
+  Tune,
+  Undo,
+  ViewSidebar,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '@mint/editor';
 import type { EditorDocument, ExportOptions } from '@mint/core';
-import { ExportDialog } from '@mint/ui';
+import { ExportDialog, loadGoogleFont } from '@mint/ui';
 import { CanvasPanel } from './components/CanvasPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { PropertiesPanel } from './components/PropertiesPanel';
+import { TextPresetDialog } from './components/TextPresetDialog';
 import { ToolbarSection } from './components/ToolbarSection';
+import { getPresetText, mergePresetStyle } from './content/text-presets';
+import type { PresetLanguage, TextPreset } from './content/text-presets';
 
 const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/mint';
 
 export const App: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const language: PresetLanguage = i18n.language.startsWith('ru') ? 'ru' : 'en';
+
   const [exportOpen, setExportOpen] = useState(false);
+  const [presetsOpen, setPresetsOpen] = useState(false);
+  const [showSafeZones, setShowSafeZones] = useState(true);
+  const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
+  const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<HTMLElement | null>(
+    null,
+  );
+
   const canUndo = useEditorStore((s) => s.canUndo);
   const canRedo = useEditorStore((s) => s.canRedo);
   const undo = useEditorStore((s) => s.undo);
@@ -46,6 +72,8 @@ export const App: React.FC = () => {
   const copyLayer = useEditorStore((s) => s.copyLayer);
   const pasteLayer = useEditorStore((s) => s.pasteLayer);
   const deleteSelectedLayer = useEditorStore((s) => s.deleteSelectedLayer);
+
+  const mobileMenuOpen = Boolean(mobileMenuAnchor);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,7 +124,6 @@ export const App: React.FC = () => {
     deleteSelectedLayer,
   ]);
 
-  // Auto-save to localStorage
   useEffect(() => {
     const timer = setTimeout(() => {
       localStorage.setItem('mint-project', JSON.stringify(doc));
@@ -104,7 +131,6 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [doc]);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('mint-project');
     if (saved) {
@@ -117,7 +143,15 @@ export const App: React.FC = () => {
         // ignore invalid data
       }
     }
-  }, []);
+  }, [loadDocument]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileLayersOpen(false);
+      setMobilePropertiesOpen(false);
+      setMobileMenuAnchor(null);
+    }
+  }, [isMobile]);
 
   const handleSaveFile = useCallback(() => {
     const json = JSON.stringify(doc, null, 2);
@@ -170,101 +204,254 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleApplyPreset = useCallback(
+    (preset: TextPreset) => {
+      const style = mergePresetStyle(preset.style);
+      loadGoogleFont(style.fontFamily);
+
+      addTextLayer({
+        text: getPresetText(preset, language),
+        x: preset.placement.x,
+        y: preset.placement.y,
+        width: preset.placement.width,
+        height: preset.placement.height,
+        style,
+      });
+      setPresetsOpen(false);
+      setMobilePropertiesOpen(true);
+    },
+    [addTextLayer, language],
+  );
+
+  const handleMobileMenuClose = () => setMobileMenuAnchor(null);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <AppBar position="static" color="default" elevation={1}>
-        <Toolbar variant="dense">
-          <Typography variant="h6" sx={{ mr: 3, color: 'primary.main' }}>
+        <Toolbar
+          variant="dense"
+          sx={{
+            gap: 1,
+            minHeight: isMobile ? 56 : undefined,
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            py: isMobile ? 0.75 : 0,
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mr: isMobile ? 0.5 : 3, color: 'primary.main' }}
+            data-testid="app-title"
+          >
             MINT
           </Typography>
 
-          <ToolbarSection />
+          <ToolbarSection compact={isMobile} />
 
           <Stack
             direction="row"
-            spacing={1}
+            spacing={isMobile ? 0.25 : 1}
             sx={{ ml: 'auto', alignItems: 'center' }}
           >
-            <Button
-              size="small"
-              startIcon={<Undo />}
-              onClick={undo}
-              disabled={!canUndo}
-            >
-              {t('toolbar.undo')}
-            </Button>
-            <Button
-              size="small"
-              startIcon={<Redo />}
-              onClick={redo}
-              disabled={!canRedo}
-            >
-              {t('toolbar.redo')}
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<TextFields />}
-              onClick={() => addTextLayer()}
-            >
-              {t('toolbar.addText')}
-            </Button>
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<Download />}
-              onClick={() => setExportOpen(true)}
-            >
-              {t('toolbar.export')}
-            </Button>
-            <Tooltip title={t('toolbar.save')}>
-              <IconButton size="small" onClick={handleSaveFile}>
-                <Save fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('toolbar.load')}>
-              <IconButton size="small" onClick={handleLoadFile}>
-                <FolderOpen fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('toolbar.donate')}>
-              <IconButton
-                size="small"
-                component="a"
-                href={BUYMEACOFFEE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ color: 'text.secondary' }}
-              >
-                <LocalCafe fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <ToggleButtonGroup
-              value={i18n.language.startsWith('ru') ? 'ru' : 'en'}
-              exclusive
-              onChange={handleLanguageChange}
-              size="small"
-              sx={{ height: 30 }}
-            >
-              <ToggleButton
-                value="en"
-                sx={{ px: 1, py: 0, fontSize: '0.75rem' }}
-              >
-                EN
-              </ToggleButton>
-              <ToggleButton
-                value="ru"
-                sx={{ px: 1, py: 0, fontSize: '0.75rem' }}
-              >
-                RU
-              </ToggleButton>
-            </ToggleButtonGroup>
+            {isMobile ? (
+              <>
+                <Tooltip title={t('toolbar.undo')}>
+                  <span>
+                    <IconButton size="small" onClick={undo} disabled={!canUndo}>
+                      <Undo fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={t('toolbar.redo')}>
+                  <span>
+                    <IconButton size="small" onClick={redo} disabled={!canRedo}>
+                      <Redo fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={t('toolbar.addText')}>
+                  <IconButton size="small" onClick={() => addTextLayer()}>
+                    <TextFields fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('toolbar.presets')}>
+                  <IconButton size="small" onClick={() => setPresetsOpen(true)}>
+                    <AutoAwesome fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('toolbar.export')}>
+                  <IconButton size="small" onClick={() => setExportOpen(true)}>
+                    <Download fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setMobileMenuAnchor(e.currentTarget)}
+                  aria-label={t('toolbar.more')}
+                >
+                  <MoreVert fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={mobileMenuAnchor}
+                  open={mobileMenuOpen}
+                  onClose={handleMobileMenuClose}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleSaveFile();
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    {t('toolbar.save')}
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleLoadFile();
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    {t('toolbar.load')}
+                  </MenuItem>
+                  <MenuItem
+                    selected={showSafeZones}
+                    onClick={() => {
+                      setShowSafeZones((prev) => !prev);
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    {t('toolbar.safeZones')}
+                  </MenuItem>
+                  <MenuItem
+                    component="a"
+                    href={BUYMEACOFFEE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleMobileMenuClose}
+                  >
+                    {t('toolbar.donate')}
+                  </MenuItem>
+                  <MenuItem
+                    selected={language === 'en'}
+                    onClick={() => {
+                      i18n.changeLanguage('en');
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    English
+                  </MenuItem>
+                  <MenuItem
+                    selected={language === 'ru'}
+                    onClick={() => {
+                      i18n.changeLanguage('ru');
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    Русский
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="small"
+                  startIcon={<Undo />}
+                  onClick={undo}
+                  disabled={!canUndo}
+                >
+                  {t('toolbar.undo')}
+                </Button>
+                <Button
+                  size="small"
+                  startIcon={<Redo />}
+                  onClick={redo}
+                  disabled={!canRedo}
+                >
+                  {t('toolbar.redo')}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<TextFields />}
+                  onClick={() => addTextLayer()}
+                >
+                  {t('toolbar.addText')}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<AutoAwesome />}
+                  onClick={() => setPresetsOpen(true)}
+                >
+                  {t('toolbar.presets')}
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<Download />}
+                  onClick={() => setExportOpen(true)}
+                >
+                  {t('toolbar.export')}
+                </Button>
+                <Tooltip title={t('toolbar.save')}>
+                  <IconButton size="small" onClick={handleSaveFile}>
+                    <Save fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('toolbar.load')}>
+                  <IconButton size="small" onClick={handleLoadFile}>
+                    <FolderOpen fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('toolbar.safeZones')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowSafeZones((prev) => !prev)}
+                    sx={{
+                      color: showSafeZones ? 'primary.main' : 'text.secondary',
+                    }}
+                  >
+                    <CropFree fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('toolbar.donate')}>
+                  <IconButton
+                    size="small"
+                    component="a"
+                    href={BUYMEACOFFEE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    <LocalCafe fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <ToggleButtonGroup
+                  value={language}
+                  exclusive
+                  onChange={handleLanguageChange}
+                  size="small"
+                  sx={{ height: 30 }}
+                >
+                  <ToggleButton
+                    value="en"
+                    sx={{ px: 1, py: 0, fontSize: '0.75rem' }}
+                  >
+                    EN
+                  </ToggleButton>
+                  <ToggleButton
+                    value="ru"
+                    sx={{ px: 1, py: 0, fontSize: '0.75rem' }}
+                  >
+                    RU
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </>
+            )}
           </Stack>
         </Toolbar>
       </AppBar>
 
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <LayersPanel />
+        {!isMobile && <LayersPanel />}
 
         <Box
           sx={{
@@ -274,19 +461,88 @@ export const App: React.FC = () => {
             justifyContent: 'center',
             bgcolor: 'background.default',
             overflow: 'auto',
-            p: 2,
+            p: isMobile ? 1.25 : 2,
+            pb: isMobile ? 10 : 2,
           }}
         >
-          <CanvasPanel ref={setCanvasPanelRef} />
+          <CanvasPanel ref={setCanvasPanelRef} showSafeZones={showSafeZones} />
         </Box>
 
-        <PropertiesPanel />
+        {!isMobile && <PropertiesPanel />}
       </Box>
+
+      {isMobile && (
+        <>
+          <Paper
+            elevation={4}
+            sx={{
+              position: 'fixed',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderTop: 1,
+              borderColor: 'divider',
+              zIndex: (muiTheme) => muiTheme.zIndex.appBar,
+            }}
+          >
+            <Stack direction="row" spacing={1} sx={{ p: 1 }}>
+              <Button
+                size="small"
+                fullWidth
+                startIcon={<ViewSidebar />}
+                onClick={() => setMobileLayersOpen(true)}
+                data-testid="mobile-layers-button"
+              >
+                {t('mobile.layers')}
+              </Button>
+              <Button
+                size="small"
+                fullWidth
+                startIcon={<Tune />}
+                onClick={() => setMobilePropertiesOpen(true)}
+                disabled={!selectedLayerId}
+                data-testid="mobile-properties-button"
+              >
+                {t('mobile.properties')}
+              </Button>
+            </Stack>
+          </Paper>
+
+          <Drawer
+            anchor="bottom"
+            open={mobileLayersOpen}
+            onClose={() => setMobileLayersOpen(false)}
+            ModalProps={{ keepMounted: true }}
+          >
+            <Box sx={{ height: '72vh' }}>
+              <LayersPanel mobile />
+            </Box>
+          </Drawer>
+
+          <Drawer
+            anchor="bottom"
+            open={mobilePropertiesOpen}
+            onClose={() => setMobilePropertiesOpen(false)}
+            ModalProps={{ keepMounted: true }}
+          >
+            <Box sx={{ height: '72vh' }}>
+              <PropertiesPanel mobile />
+            </Box>
+          </Drawer>
+        </>
+      )}
 
       <ExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         onExport={handleExport}
+      />
+
+      <TextPresetDialog
+        open={presetsOpen}
+        language={language}
+        onClose={() => setPresetsOpen(false)}
+        onApply={handleApplyPreset}
       />
     </Box>
   );

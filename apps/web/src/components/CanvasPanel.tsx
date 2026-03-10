@@ -9,7 +9,7 @@ import {
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { FabricAdapter, useEditorStore } from '@mint/editor';
-import type { ExportOptions, TextLayerData } from '@mint/core';
+import type { CanvasPresetId, ExportOptions, TextLayerData } from '@mint/core';
 import { getPresetById, generateExportFilename } from '@mint/core';
 import { readFileAsDataUrl } from '@mint/utils';
 
@@ -17,10 +17,19 @@ export interface CanvasPanelHandle {
   handleExport: (options: ExportOptions) => void;
 }
 
-const CANVAS_SCALE = 0.5;
+interface CanvasPanelProps {
+  showSafeZones: boolean;
+}
 
-export const CanvasPanel = forwardRef<CanvasPanelHandle>(
-  function CanvasPanel(_props, ref) {
+const CANVAS_SCALE = 0.5;
+const SAFE_ZONES: Record<CanvasPresetId, { top: number; bottom: number }> = {
+  square: { top: 120, bottom: 120 },
+  portrait: { top: 140, bottom: 180 },
+  story: { top: 250, bottom: 320 },
+};
+
+export const CanvasPanel = forwardRef<CanvasPanelHandle, CanvasPanelProps>(
+  function CanvasPanel({ showSafeZones }, ref) {
     const { t } = useTranslation();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const adapterRef = useRef<FabricAdapter | null>(null);
@@ -105,6 +114,7 @@ export const CanvasPanel = forwardRef<CanvasPanelHandle>(
     }, []);
 
     const preset = getPresetById(doc.presetId);
+    const safeZone = showSafeZones ? SAFE_ZONES[doc.presetId] : null;
 
     return (
       <Box
@@ -122,6 +132,54 @@ export const CanvasPanel = forwardRef<CanvasPanelHandle>(
         }}
       >
         <canvas ref={canvasRef} />
+        {safeZone && (
+          <>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: safeZone.top * CANVAS_SCALE,
+                bgcolor: 'rgba(255, 59, 107, 0.18)',
+                borderBottom: '1px dashed rgba(255, 59, 107, 0.9)',
+                pointerEvents: 'none',
+                zIndex: 3,
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: safeZone.bottom * CANVAS_SCALE,
+                bgcolor: 'rgba(255, 59, 107, 0.18)',
+                borderTop: '1px dashed rgba(255, 59, 107, 0.9)',
+                pointerEvents: 'none',
+                zIndex: 3,
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                bgcolor: 'rgba(0, 0, 0, 0.6)',
+                color: '#fff',
+                pointerEvents: 'none',
+                zIndex: 4,
+              }}
+            >
+              {t('canvas.safeZoneHint')}
+            </Typography>
+          </>
+        )}
         {dragging && (
           <Box
             sx={{

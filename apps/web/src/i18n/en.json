@@ -3,11 +3,14 @@
     "undo": "Undo",
     "redo": "Redo",
     "addText": "Add Text",
+    "presets": "Text Presets",
     "export": "Export",
     "canvasSize": "Canvas Size",
     "donate": "Buy me a coffee",
     "save": "Save project",
-    "load": "Load project"
+    "load": "Load project",
+    "safeZones": "Safe zones",
+    "more": "More actions"
   },
   "layers": {
     "background": "Background",
@@ -19,11 +22,48 @@
     "bgColor": "Canvas Color"
   },
   "canvas": {
-    "dropImage": "Drop image here"
+    "dropImage": "Drop image here",
+    "safeZoneHint": "Keep key text in the middle area"
   },
   "properties": {
     "title": "Properties",
     "selectLayer": "Select a layer to edit properties"
+  },
+  "mobile": {
+    "layers": "Layers",
+    "properties": "Style"
+  },
+  "presetsLibrary": {
+    "title": "Text Presets",
+    "goal": "Goal",
+    "format": "Format",
+    "category": "Block Type",
+    "apply": "Apply",
+    "empty": "No presets for this filter combination",
+    "filters": {
+      "all": "All"
+    },
+    "categories": {
+      "hook": "Hook",
+      "body": "Body",
+      "cta": "CTA"
+    },
+    "goals": {
+      "reach": "Reach",
+      "engagement": "Engagement",
+      "conversion": "Conversion"
+    },
+    "formats": {
+      "universal": "Universal",
+      "reel": "Reel",
+      "carousel": "Carousel",
+      "story": "Story"
+    },
+    "tones": {
+      "personal": "Personal",
+      "expert": "Expert",
+      "direct": "Direct"
+    }
   },
   "style": {
     "text": "Text",

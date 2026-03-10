@@ -14,5 +14,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          fabric: ['fabric'],
+          mui: [
+            '@emotion/react',
+            '@emotion/styled',
+            '@mui/icons-material',
+            '@mui/material',
+          ],
+          i18n: ['i18next', 'react-i18next'],
+        },
+      },
+    },
   },
 });

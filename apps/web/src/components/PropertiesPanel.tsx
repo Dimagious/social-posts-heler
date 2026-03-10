@@ -7,7 +7,13 @@ import type { TextLayerData } from '@mint/core';
 
 const PANEL_WIDTH = 300;
 
-export const PropertiesPanel: React.FC = () => {
+interface PropertiesPanelProps {
+  mobile?: boolean;
+}
+
+export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
+  mobile = false,
+}) => {
   const { t } = useTranslation();
   const doc = useEditorStore((s) => s.document);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -17,15 +23,17 @@ export const PropertiesPanel: React.FC = () => {
 
   return (
     <Paper
+      data-testid={mobile ? 'properties-panel-mobile' : 'properties-panel'}
       sx={{
-        width: PANEL_WIDTH,
-        minWidth: PANEL_WIDTH,
+        width: mobile ? '100%' : PANEL_WIDTH,
+        minWidth: mobile ? 0 : PANEL_WIDTH,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 0,
-        borderLeft: 1,
+        borderLeft: mobile ? 0 : 1,
         borderColor: 'divider',
         overflow: 'auto',
+        height: '100%',
       }}
       elevation={0}
     >

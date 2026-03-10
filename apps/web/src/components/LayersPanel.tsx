@@ -8,7 +8,11 @@ import { readFileAsDataUrl } from '@mint/utils';
 
 const PANEL_WIDTH = 260;
 
-export const LayersPanel: React.FC = () => {
+interface LayersPanelProps {
+  mobile?: boolean;
+}
+
+export const LayersPanel: React.FC<LayersPanelProps> = ({ mobile = false }) => {
   const { t } = useTranslation();
   const doc = useEditorStore((s) => s.document);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -34,14 +38,16 @@ export const LayersPanel: React.FC = () => {
 
   return (
     <Paper
+      data-testid={mobile ? 'layers-panel-mobile' : 'layers-panel'}
       sx={{
-        width: PANEL_WIDTH,
-        minWidth: PANEL_WIDTH,
+        width: mobile ? '100%' : PANEL_WIDTH,
+        minWidth: mobile ? 0 : PANEL_WIDTH,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 0,
-        borderRight: 1,
+        borderRight: mobile ? 0 : 1,
         borderColor: 'divider',
+        height: '100%',
       }}
       elevation={0}
     >

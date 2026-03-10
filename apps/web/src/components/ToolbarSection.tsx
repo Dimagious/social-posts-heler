@@ -5,22 +5,36 @@ import { CANVAS_PRESETS } from '@mint/core';
 import type { CanvasPresetId } from '@mint/core';
 import { useEditorStore } from '@mint/editor';
 
-export const ToolbarSection: React.FC = () => {
+interface ToolbarSectionProps {
+  compact?: boolean;
+}
+
+export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
+  compact = false,
+}) => {
   const { t } = useTranslation();
   const presetId = useEditorStore((s) => s.document.presetId);
   const setPreset = useEditorStore((s) => s.setPreset);
 
   return (
-    <FormControl size="small" sx={{ minWidth: 200 }}>
+    <FormControl size="small" sx={{ minWidth: compact ? 132 : 200 }}>
       <InputLabel>{t('toolbar.canvasSize')}</InputLabel>
       <Select
         value={presetId}
         label={t('toolbar.canvasSize')}
+        sx={{
+          '.MuiSelect-select': {
+            fontSize: compact ? '0.8rem' : '0.875rem',
+            py: compact ? 0.75 : 1,
+          },
+        }}
         onChange={(e) => setPreset(e.target.value as CanvasPresetId)}
       >
         {CANVAS_PRESETS.map((p) => (
           <MenuItem key={p.id} value={p.id}>
-            {p.width} x {p.height} ({t(`presets.${p.id}`)})
+            {compact
+              ? t(`presets.${p.id}`)
+              : `${p.width} x ${p.height} (${t(`presets.${p.id}`)})`}
           </MenuItem>
         ))}
       </Select>
