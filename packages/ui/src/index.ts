@@ -2,4 +2,8 @@ export { theme } from './theme';
 export { LayerListItem } from './components/LayerListItem';
 export { StylePanel } from './components/StylePanel';
 export { ExportDialog } from './components/ExportDialog';
-export { preloadAllGoogleFonts, loadGoogleFont } from './fonts';
+export {
+  preloadAllGoogleFonts,
+  loadGoogleFont,
+  ensureFontLoaded,
+} from './fonts';

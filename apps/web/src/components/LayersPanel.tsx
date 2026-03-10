@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Box, Typography, List, Button, Paper, Stack } from '@mui/material';
-import { Add, Image } from '@mui/icons-material';
+import { Add, HideImage, Image } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '@mint/editor';
 import { LayerListItem } from '@mint/ui';
@@ -73,18 +73,34 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ mobile = false }) => {
             />
           </Button>
           {doc.background.dataUrl && (
-            <Button
-              size="small"
-              fullWidth
-              onClick={() =>
-                setBackground({
-                  ...doc.background,
-                  fit: doc.background.fit === 'contain' ? 'cover' : 'contain',
-                })
-              }
-            >
-              {t('layers.fit', { fit: doc.background.fit })}
-            </Button>
+            <Stack direction="row" spacing={0.5}>
+              <Button
+                size="small"
+                fullWidth
+                onClick={() =>
+                  setBackground({
+                    ...doc.background,
+                    fit: doc.background.fit === 'contain' ? 'cover' : 'contain',
+                  })
+                }
+              >
+                {t('layers.fit', { fit: doc.background.fit })}
+              </Button>
+              <Button
+                size="small"
+                fullWidth
+                color="inherit"
+                startIcon={<HideImage />}
+                onClick={() =>
+                  setBackground({
+                    ...doc.background,
+                    dataUrl: null,
+                  })
+                }
+              >
+                {t('layers.removeImage')}
+              </Button>
+            </Stack>
           )}
           <Box>
             <Typography variant="caption">{t('layers.bgColor')}</Typography>
@@ -101,6 +117,15 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ mobile = false }) => {
                 cursor: 'pointer',
               }}
             />
+            {doc.background.dataUrl && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 0.25 }}
+              >
+                {t('layers.bgColorHint')}
+              </Typography>
+            )}
           </Box>
         </Stack>
       </Box>

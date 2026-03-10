@@ -14,11 +14,13 @@
   "layers": {
     "background": "Background",
     "uploadImage": "Upload Image",
+    "removeImage": "Clear Image",
     "fit": "Fit: {{fit}}",
     "title": "Layers",
     "add": "Add",
     "emptyText": "Empty text",
-    "bgColor": "Canvas Color"
+    "bgColor": "Canvas Color",
+    "bgColorHint": "Canvas color is visible in areas not covered by the image."
   },
   "canvas": {
     "dropImage": "Drop image here",

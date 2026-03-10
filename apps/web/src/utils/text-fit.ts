@@ -2,20 +2,31 @@ import type { TextLayerData } from '@mint/core';
 
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 240;
+const FABRIC_CHAR_SPACING_MULTIPLIER = 10;
+
+const measureCanvas =
+  typeof window !== 'undefined'
+    ? window.document.createElement('canvas')
+    : null;
+const measureContext = measureCanvas?.getContext('2d') ?? null;
 
 function getMeasureContext(): CanvasRenderingContext2D | null {
-  const canvas = window.document.createElement('canvas');
-  return canvas.getContext('2d');
+  return measureContext;
+}
+
+function getLetterSpacingPx(fontSize: number, letterSpacing: number): number {
+  // Fabric Textbox interprets charSpacing as 1/1000 em units.
+  return (letterSpacing * FABRIC_CHAR_SPACING_MULTIPLIER * fontSize) / 1000;
 }
 
 function measureLineWidth(
   ctx: CanvasRenderingContext2D,
   line: string,
-  letterSpacing: number,
+  letterSpacingPx: number,
 ): number {
   if (!line) return 0;
   const measured = ctx.measureText(line).width;
-  const spacing = Math.max(0, line.length - 1) * Math.max(0, letterSpacing);
+  const spacing = Math.max(0, line.length - 1) * letterSpacingPx;
   return measured + spacing;
 }
 
@@ -24,9 +35,13 @@ function maxTextWidthForSize(layer: TextLayerData, fontSize: number): number {
   if (!ctx) return Number.POSITIVE_INFINITY;
 
   ctx.font = `${layer.style.fontWeight} ${fontSize}px "${layer.style.fontFamily}", sans-serif`;
+  const letterSpacingPx = getLetterSpacingPx(
+    fontSize,
+    layer.style.letterSpacing,
+  );
   const lines = layer.text.split('\n');
   const widths = lines.map((line) =>
-    measureLineWidth(ctx, line, layer.style.letterSpacing),
+    measureLineWidth(ctx, line, letterSpacingPx),
   );
   return Math.max(...widths, 0);
 }

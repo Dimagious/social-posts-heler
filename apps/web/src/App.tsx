@@ -38,8 +38,18 @@ import { CanvasPanel } from './components/CanvasPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ToolbarSection } from './components/ToolbarSection';
+import { isEditorDocument } from './utils/document-validation';
 
 const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/dimagious';
+const PROJECT_STORAGE_KEY = 'mint-project';
+
+function isQuotaExceededError(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === 'QuotaExceededError' ||
+      error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+  );
+}
 
 export const App: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -121,21 +131,41 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem('mint-project', JSON.stringify(doc));
+      const serializedDoc = JSON.stringify(doc);
+      try {
+        localStorage.setItem(PROJECT_STORAGE_KEY, serializedDoc);
+      } catch (error) {
+        if (!isQuotaExceededError(error)) return;
+        // Drop heavy background image when storage quota is exceeded.
+        const lightweightDoc: EditorDocument = {
+          ...doc,
+          background: { ...doc.background, dataUrl: null },
+        };
+        try {
+          localStorage.setItem(
+            PROJECT_STORAGE_KEY,
+            JSON.stringify(lightweightDoc),
+          );
+        } catch {
+          // ignore storage errors
+        }
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [doc]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('mint-project');
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as EditorDocument;
-        if (parsed.presetId && parsed.layers) {
+        const parsed = JSON.parse(saved);
+        if (isEditorDocument(parsed)) {
           loadDocument(parsed);
+        } else {
+          localStorage.removeItem(PROJECT_STORAGE_KEY);
         }
       } catch {
-        // ignore invalid data
+        localStorage.removeItem(PROJECT_STORAGE_KEY);
       }
     }
   }, [loadDocument]);
@@ -168,8 +198,8 @@ export const App: React.FC = () => {
       if (!file) return;
       const text = await file.text();
       try {
-        const parsed = JSON.parse(text) as EditorDocument;
-        if (parsed.presetId && parsed.layers) {
+        const parsed = JSON.parse(text);
+        if (isEditorDocument(parsed)) {
           loadDocument(parsed);
         }
       } catch {

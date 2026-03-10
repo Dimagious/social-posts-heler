@@ -32,6 +32,37 @@ interface StylePanelProps {
   onSmartContrast?: () => void | Promise<void>;
 }
 
+function byteToHex(value: number): string {
+  const clamped = Math.max(0, Math.min(255, Math.round(value)));
+  return clamped.toString(16).padStart(2, '0');
+}
+
+function normalizeColorForInput(color: string, fallback: string): string {
+  const fullHexMatch = color.match(/^#([a-f0-9]{6})$/i);
+  if (fullHexMatch) {
+    return `#${fullHexMatch[1]!.toLowerCase()}`;
+  }
+
+  const shortHexMatch = color.match(/^#([a-f0-9]{3})$/i);
+  if (shortHexMatch) {
+    const [r, g, b] = shortHexMatch[1]!.toLowerCase().split('');
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+
+  const rgbMatch = color.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbMatch) {
+    const channels = rgbMatch[1]!
+      .split(',')
+      .slice(0, 3)
+      .map((chunk) => Number.parseFloat(chunk.trim()));
+    if (channels.length === 3 && channels.every(Number.isFinite)) {
+      return `#${byteToHex(channels[0]!)}${byteToHex(channels[1]!)}${byteToHex(channels[2]!)}`;
+    }
+  }
+
+  return fallback;
+}
+
 export const StylePanel: React.FC<StylePanelProps> = ({
   layer,
   onUpdate,
@@ -338,7 +369,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
                           offsetX: 2,
                           offsetY: 2,
                           blur: 4,
-                          color: 'rgba(0,0,0,0.5)',
+                          color: '#000000',
                         },
                       });
                     } else {
@@ -413,7 +444,10 @@ export const StylePanel: React.FC<StylePanelProps> = ({
                   <Typography variant="caption">{t('style.color')}</Typography>
                   <input
                     type="color"
-                    value={layer.style.shadow.color}
+                    value={normalizeColorForInput(
+                      layer.style.shadow.color,
+                      '#000000',
+                    )}
                     onChange={(e) =>
                       updateStyle({
                         shadow: {
@@ -521,7 +555,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
                     if (e.target.checked) {
                       updateStyle({
                         background: {
-                          color: 'rgba(0,0,0,0.6)',
+                          color: '#000000',
                           padding: 10,
                           borderRadius: 4,
                         },
@@ -541,7 +575,10 @@ export const StylePanel: React.FC<StylePanelProps> = ({
                   <Typography variant="caption">{t('style.color')}</Typography>
                   <input
                     type="color"
-                    value={layer.style.background.color}
+                    value={normalizeColorForInput(
+                      layer.style.background.color,
+                      '#000000',
+                    )}
                     onChange={(e) =>
                       updateStyle({
                         background: {
@@ -573,27 +610,6 @@ export const StylePanel: React.FC<StylePanelProps> = ({
                         background: {
                           ...layer.style.background!,
                           padding: v as number,
-                        },
-                      })
-                    }
-                    size="small"
-                  />
-                </Box>
-                <Box>
-                  <Typography variant="caption">
-                    {t('style.bgRadius', {
-                      value: layer.style.background.borderRadius,
-                    })}
-                  </Typography>
-                  <Slider
-                    value={layer.style.background.borderRadius}
-                    min={0}
-                    max={30}
-                    onChange={(_, v) =>
-                      updateStyle({
-                        background: {
-                          ...layer.style.background!,
-                          borderRadius: v as number,
                         },
                       })
                     }

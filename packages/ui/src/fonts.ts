@@ -71,3 +71,19 @@ export function preloadAllGoogleFonts(): void {
     loadedFonts.add(f.family);
   }
 }
+
+export async function ensureFontLoaded(
+  family: string,
+  weight = 400,
+): Promise<void> {
+  loadGoogleFont(family);
+  if (!('fonts' in document) || typeof document.fonts.load !== 'function') {
+    return;
+  }
+
+  try {
+    await document.fonts.load(`${weight} 32px "${family}"`);
+  } catch {
+    // ignore font loading failures and continue with fallback metrics
+  }
+}

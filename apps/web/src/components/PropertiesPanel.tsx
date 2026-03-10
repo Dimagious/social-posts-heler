@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '@mint/editor';
-import { StylePanel, loadGoogleFont } from '@mint/ui';
+import { StylePanel, ensureFontLoaded } from '@mint/ui';
 import type { TextLayerData } from '@mint/core';
 import { getPresetById, getSafeZoneByPresetId } from '@mint/core';
 import {
@@ -79,9 +79,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     [doc.presetId, selectedLayer, updateTextLayer],
   );
 
-  const handleFitTextWidth = useCallback(() => {
+  const handleFitTextWidth = useCallback(async () => {
     if (!selectedLayer) return;
-    loadGoogleFont(selectedLayer.style.fontFamily);
+    await ensureFontLoaded(
+      selectedLayer.style.fontFamily,
+      selectedLayer.style.fontWeight,
+    );
     const fittedSize = calculateFitFontSize(selectedLayer);
     updateTextLayer(selectedLayer.id, {
       style: {
